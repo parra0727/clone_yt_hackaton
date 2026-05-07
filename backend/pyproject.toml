@@ -9,6 +9,12 @@ dependencies = [
   "sqlalchemy==2.0.43",
   "pydantic==2.11.7",
   "python-multipart==0.0.20",
+  "psycopg2-binary>=2.9",
+  "alembic>=1.13",
+  "redis>=5.0",
+  "hiredis>=2.3",
+  "python-dotenv>=1.0",
+  "gunicorn>=22.0",
 ]
 
 [build-system]

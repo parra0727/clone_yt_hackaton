@@ -1,4 +1,4 @@
-from sqlalchemy import desc
+from sqlalchemy import desc, func, update
 from sqlalchemy.orm import Session
 
 from app.models.video import Video
@@ -45,10 +45,46 @@ class VideoRepository:
         return video
 
     def increment_views(self, video: Video) -> Video:
-        video.views += 1
+        self.db.execute(
+            update(Video)
+            .where(Video.id == video.id)
+            .values(views=Video.views + 1)
+        )
         self.db.commit()
         self.db.refresh(video)
         return video
+
+    def flush_views(self, video_id: int, count: int) -> None:
+        self.db.execute(
+            update(Video)
+            .where(Video.id == video_id)
+            .values(views=Video.views + count)
+        )
+        self.db.commit()
+
+    def get_recommended(self, video_id: int, limit: int = 8) -> list[Video]:
+        current = self.db.query(Video).filter(Video.id == video_id).first()
+        if not current:
+            return []
+        return (
+            self.db.query(Video)
+            .filter(Video.id != video_id)
+            .order_by(desc(Video.views))
+            .limit(limit)
+            .all()
+        )
+
+    def get_all_paginated(self, offset: int = 0, limit: int = 20) -> list[Video]:
+        return (
+            self.db.query(Video)
+            .order_by(desc(Video.created_at))
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def count_all(self) -> int:
+        return self.db.query(func.count(Video.id)).scalar()
 
     def delete(self, video: Video) -> None:
         self.db.delete(video)

@@ -20,11 +20,11 @@ export function VideoCard({ video }: VideoCardProps) {
   return (
     <Link to={`/watch/${video.id}`} className="video-card">
       <div className="video-thumb">
-        {thumbnailSrc ? <img src={thumbnailSrc} alt={`${video.title} thumbnail`} /> : null}
+        {thumbnailSrc ? <img src={thumbnailSrc} alt={`${video.title} thumbnail`} loading="lazy" /> : null}
         <span className="video-duration">12:34</span>
       </div>
       <div className="video-meta">
-        {avatarSrc ? <img className="channel-dot" src={avatarSrc} alt={`${video.uploader?.display_name ?? 'Uploader'} avatar`} /> : <div className="channel-dot" />}
+        {avatarSrc ? <img className="channel-dot" src={avatarSrc} alt={`${video.uploader?.display_name ?? 'Uploader'} avatar`} loading="lazy" /> : <div className="channel-dot" />}
         <div>
           <h3 className="video-title">{video.title}</h3>
           <small className="video-channel">{video.uploader?.display_name ?? 'Unknown creator'}</small>

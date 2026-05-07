@@ -1,12 +1,23 @@
-FROM oven/bun:1.2.2-alpine
+FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json ./
-RUN bun install
+COPY package.json bun.lock* bun.lockb* ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
-EXPOSE 5173
+ENV VITE_API_BASE_URL=""
+RUN bun run build
 
-CMD ["bun", "run", "dev"]
+FROM nginx:alpine
+
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+RUN echo 'server { \
+  listen 3000; \
+  root /usr/share/nginx/html; \
+  location / { try_files $uri $uri/ /index.html; } \
+}' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 3000
