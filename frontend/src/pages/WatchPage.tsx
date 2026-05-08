@@ -15,7 +15,7 @@ export function WatchPage() {
   const videoId = Number(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { streamCache, refreshVideos } = useVideoCache();
+  const { refreshVideos } = useVideoCache();
   const { currentUser, isSubscribedTo, subscribe, unsubscribe } = useUserContext();
   const [author, setAuthor] = useState(currentUser?.display_name ?? '');
   const [content, setContent] = useState('');
@@ -65,8 +65,8 @@ export function WatchPage() {
 
   const streamSrc = useMemo(() => {
     if (!videoQuery.data) return '';
-    return streamCache[videoId] ?? toAbsoluteStreamUrl(videoQuery.data.stream_url);
-  }, [streamCache, videoId, videoQuery.data]);
+    return toAbsoluteStreamUrl(videoQuery.data.stream_url);
+  }, [videoId, videoQuery.data]);
 
   const uploaderId = videoQuery.data?.uploader?.id ?? null;
   const showSubscribeButton =

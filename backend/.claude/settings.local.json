@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv sync *)",
+      "Bash(uv run *)",
+      "Bash(docker compose *)",
+      "PowerShell(netstat *)",
+      "PowerShell(Get-Process *)",
+      "Bash(docker exec uconnect_postgres *)",
+      "Bash(DATABASE_URL=\"postgresql://uconnect_user:uconnect_secret_2025@localhost:5432/youtube_clone\" uv run alembic revision --autogenerate -m \"initial schema\")"
+    ]
+  }
+}

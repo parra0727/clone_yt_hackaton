@@ -1,12 +1,14 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-
-import { fetchVideos, toAbsoluteStreamUrl } from '../api/client';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { fetchVideos } from '../api/client';
 import type { Video } from '../types';
+
+const PAGE_SIZE = 20;
 
 type VideoCacheContextValue = {
   videos: Video[];
-  streamCache: Record<number, string>;
   loading: boolean;
+  hasMore: boolean;
+  loadMore: () => Promise<void>;
   refreshVideos: () => Promise<void>;
 };
 
@@ -14,46 +16,49 @@ const VideoCacheContext = createContext<VideoCacheContextValue | undefined>(unde
 
 export function VideoCacheProvider({ children }: { children: React.ReactNode }) {
   const [videos, setVideos] = useState<Video[]>([]);
-  const [streamCache, setStreamCache] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const offsetRef = useRef(0);
 
-  const loadAll = useCallback(async () => {
+  const loadMore = useCallback(async () => {
+    if (!hasMore) return;
     setLoading(true);
-
     try {
-      const allVideos = await fetchVideos();
-      setVideos(allVideos);
-
-      const prefetched = await Promise.allSettled(
-        allVideos.map(async (video) => {
-          const response = await fetch(toAbsoluteStreamUrl(video.stream_url));
-          const blob = await response.blob();
-          const objectUrl = URL.createObjectURL(blob);
-          return [video.id, objectUrl] as const;
-        })
-      );
-
-      setStreamCache((previous) => {
-        Object.values(previous).forEach((url) => URL.revokeObjectURL(url));
-
-        const entries = prefetched
-          .filter((item): item is PromiseFulfilledResult<readonly [number, string]> => item.status === 'fulfilled')
-          .map((item) => item.value);
-
-        return Object.fromEntries(entries);
+      const page = await fetchVideos(offsetRef.current, PAGE_SIZE);
+      setVideos((prev) => {
+        const ids = new Set(prev.map((v) => v.id));
+        const newOnes = page.filter((v) => !ids.has(v.id));
+        return [...prev, ...newOnes];
       });
+      offsetRef.current += page.length;
+      setHasMore(page.length === PAGE_SIZE);
+    } finally {
+      setLoading(false);
+    }
+  }, [hasMore]);
+
+  const refreshVideos = useCallback(async () => {
+    offsetRef.current = 0;
+    setHasMore(true);
+    setVideos([]);
+    setLoading(true);
+    try {
+      const page = await fetchVideos(0, PAGE_SIZE);
+      setVideos(page);
+      offsetRef.current = page.length;
+      setHasMore(page.length === PAGE_SIZE);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
+    void refreshVideos();
+  }, []);
 
   const value = useMemo(
-    () => ({ videos, streamCache, loading, refreshVideos: loadAll }),
-    [videos, streamCache, loading, loadAll]
+    () => ({ videos, loading, hasMore, loadMore, refreshVideos }),
+    [videos, loading, hasMore, loadMore, refreshVideos]
   );
 
   return <VideoCacheContext.Provider value={value}>{children}</VideoCacheContext.Provider>;
@@ -61,8 +66,6 @@ export function VideoCacheProvider({ children }: { children: React.ReactNode }) 
 
 export function useVideoCache() {
   const context = useContext(VideoCacheContext);
-  if (!context) {
-    throw new Error('useVideoCache must be used within VideoCacheProvider');
-  }
+  if (!context) throw new Error('useVideoCache must be used within VideoCacheProvider');
   return context;
 }

@@ -4,8 +4,11 @@ from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 
+from app.core.redis_client import redis_client
 from app.models.video import Video
 from app.repositories.interfaces import UserRepositoryPort, VideoRepositoryPort
+
+VIEW_BUFFER_THRESHOLD = int(os.getenv("VIEW_BUFFER_THRESHOLD", "10"))
 
 
 class VideoService:
@@ -15,6 +18,9 @@ class VideoService:
 
     def list_videos(self) -> list[Video]:
         return self.repo.get_all()
+
+    def list_videos_paginated(self, offset: int = 0, limit: int = 20) -> list[Video]:
+        return self.repo.get_all_paginated(offset=offset, limit=limit)
 
     def get_video(self, video_id: int) -> Video:
         video = self.repo.get_by_id(video_id)
@@ -55,24 +61,18 @@ class VideoService:
         )
 
     def get_recommended(self, video_id: int, limit: int = 8) -> list[Video]:
-        current = self.get_video(video_id)
-        all_videos = self.repo.get_all()
-
-        current_terms = set(current.title.lower().split())
-
-        def score(video: Video) -> tuple[int, int]:
-            if video.id == current.id:
-                return (-1, -1)
-            terms = set(video.title.lower().split())
-            overlap = len(current_terms.intersection(terms))
-            return (overlap, video.views)
-
-        ranked = sorted(all_videos, key=score, reverse=True)
-        return [video for video in ranked if video.id != current.id][:limit]
+        self.get_video(video_id)  # valida que existe
+        return self.repo.get_recommended(video_id=video_id, limit=limit)
 
     def increment_views(self, video_id: int) -> Video:
         video = self.get_video(video_id)
-        return self.repo.increment_views(video)
+        key = f"views:buffer:{video_id}"
+        count = redis_client.incr(key)
+        if count >= VIEW_BUFFER_THRESHOLD:
+            buffered = redis_client.getdel(key)
+            if buffered:
+                self.repo.flush_views(video_id=video_id, count=int(buffered))
+        return self.repo.get_by_id(video_id)
 
     def delete_video(self, video_id: int, requester_user_id: int) -> None:
         if self.user_repo.get_by_id(requester_user_id) is None:
