@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv sync *)",
+      "PowerShell(Start-Sleep -Seconds 5; Invoke-WebRequest -Uri \"http://localhost/health\" -UseBasicParsing | Select-Object StatusCode, Content)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost/health\" -UseBasicParsing 2>&1)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost/api/health\" -UseBasicParsing 2>&1; Invoke-WebRequest -Uri \"http://localhost/api/videos\" -UseBasicParsing | Select-Object StatusCode, Content 2>&1)",
+      "PowerShell(docker exec youtube_clone_backend *)"
+    ]
+  }
+}
