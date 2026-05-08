@@ -1,22 +1,22 @@
-# API Documentation — YouTube Clone
+# Documentación de la API — YouTube Clone
 
-## Overview
+## Descripción general
 
-REST API for a YouTube clone built with FastAPI + PostgreSQL + Redis.
-All endpoints are served through Nginx at `http://<host>/api`.
+API REST para un clon de YouTube construido con FastAPI + PostgreSQL + Redis.
+Todos los endpoints se sirven a través de Nginx en `http://<host>/api`.
 
-**Base URL:** `http://<host>/api`  
-**Content-Type:** `application/json` (unless specified)  
-**Authentication:** Not required (open API)
+**URL Base:** `http://<host>/api`
+**Content-Type:** `application/json` (salvo que se indique lo contrario)
+**Autenticación:** No requerida (API abierta)
 
 ---
 
 ## Health
 
 ### GET /health
-Check if the server is running.
+Verifica que el servidor está funcionando.
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 { "status": "ok" }
 ```
@@ -26,28 +26,28 @@ Check if the server is running.
 ## Videos
 
 ### GET /videos
-List videos with pagination.
+Lista videos con paginación.
 
-**Query Parameters:**
-| Parameter | Type    | Default | Description          |
-|-----------|---------|---------|----------------------|
-| offset    | integer | 0       | Number of items to skip |
-| limit     | integer | 20      | Items per page (max 100) |
+**Parámetros de consulta:**
+| Parámetro | Tipo    | Default | Descripción                  |
+|-----------|---------|---------|------------------------------|
+| offset    | integer | 0       | Número de items a saltar     |
+| limit     | integer | 20      | Items por página (máximo 100)|
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 [
   {
     "id": 1,
-    "title": "My Video",
-    "description": "Video description",
+    "title": "Mi Video",
+    "description": "Descripción del video",
     "stream_url": "/videos/1/stream",
     "thumbnail_url": "/videos/1/thumbnail",
     "views": 42,
     "created_at": "2026-05-06T22:00:00",
     "uploader": {
       "id": 1,
-      "display_name": "John Doe",
+      "display_name": "Juan Perez",
       "avatar_url": "/users/1/avatar"
     }
   }
@@ -57,70 +57,70 @@ List videos with pagination.
 ---
 
 ### POST /videos/upload
-Upload a new video.
+Sube un nuevo video.
 
 **Content-Type:** `multipart/form-data`
 
-**Form Fields:**
-| Field        | Type   | Required | Description              |
-|--------------|--------|----------|--------------------------|
-| title        | string | Yes      | Video title              |
-| description  | string | No       | Video description        |
-| file         | file   | Yes      | Video file (.mp4)        |
-| thumbnail    | file   | No       | Thumbnail image          |
-| uploader_id  | int    | No       | ID of the uploader user  |
+**Campos del formulario:**
+| Campo       | Tipo   | Requerido | Descripción                   |
+|-------------|--------|-----------|-------------------------------|
+| title       | string | Sí        | Título del video              |
+| description | string | No        | Descripción del video         |
+| file        | file   | Sí        | Archivo de video (.mp4)       |
+| thumbnail   | file   | No        | Imagen de miniatura           |
+| uploader_id | int    | No        | ID del usuario que sube       |
 
-**Response 200:** Video object (same as GET /videos item)
+**Respuesta 200:** Objeto de video (igual al item de GET /videos)
 
-**Error Responses:**
-- `404` — Uploader not found
-- `400` — Thumbnail must be an image
+**Errores:**
+- `404` — Usuario no encontrado
+- `400` — El thumbnail debe ser una imagen
 
 ---
 
 ### GET /videos/{video_id}
-Get video details and increment view count.
+Obtiene el detalle de un video e incrementa el contador de vistas.
 
-**Path Parameters:**
-| Parameter | Type    | Description |
-|-----------|---------|-------------|
-| video_id  | integer | Video ID    |
+**Parámetros de ruta:**
+| Parámetro | Tipo    | Descripción  |
+|-----------|---------|--------------|
+| video_id  | integer | ID del video |
 
-**Response 200:** Video object
+**Respuesta 200:** Objeto de video
 
-**Error Responses:**
-- `404` — Video not found
+**Errores:**
+- `404` — Video no encontrado
 
 ---
 
 ### DELETE /videos/{video_id}
-Delete a video. Only the uploader can delete their own video.
+Elimina un video. Solo el dueño puede eliminar su propio video.
 
-**Query Parameters:**
-| Parameter          | Type    | Required | Description       |
-|--------------------|---------|----------|-------------------|
-| requester_user_id  | integer | Yes      | ID of the requester |
+**Parámetros de consulta:**
+| Parámetro         | Tipo    | Requerido | Descripción             |
+|-------------------|---------|-----------|-------------------------|
+| requester_user_id | integer | Sí        | ID del usuario solicitante |
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 { "status": "ok" }
 ```
 
-**Error Responses:**
-- `403` — Not allowed to delete this video
-- `404` — Video or user not found
+**Errores:**
+- `403` — No tienes permiso para eliminar este video
+- `404` — Video o usuario no encontrado
 
 ---
 
 ### GET /videos/{video_id}/stream
-Stream video file with HTTP Range request support.
+Transmite el archivo de video con soporte de Range requests HTTP.
 
 **Headers:**
-| Header | Example              | Description                    |
-|--------|----------------------|--------------------------------|
-| Range  | `bytes=0-1048575`    | Optional byte range to fetch   |
+| Header | Ejemplo           | Descripción                         |
+|--------|-------------------|-------------------------------------|
+| Range  | `bytes=0-1048575` | Rango de bytes a obtener (opcional) |
 
-**Response 206** (with Range header):
+**Respuesta 206** (con header Range):
 ```
 Content-Range: bytes 0-1048575/10485760
 Accept-Ranges: bytes
@@ -128,17 +128,17 @@ Content-Length: 1048576
 Content-Type: video/mp4
 ```
 
-**Response 200** (without Range header): Full video stream
+**Respuesta 200** (sin header Range): Stream completo del video
 
-**Error Responses:**
-- `404` — Video or file not found
+**Errores:**
+- `404` — Video o archivo no encontrado
 
 ---
 
 ### GET /videos/{video_id}/thumbnail
-Get video thumbnail image.
+Obtiene la imagen miniatura del video.
 
-**Response 200:** Image file (jpeg/png)
+**Respuesta 200:** Archivo de imagen (jpeg/png)
 
 **Headers:**
 ```
@@ -146,22 +146,22 @@ Cache-Control: public, max-age=3600
 Content-Type: image/jpeg
 ```
 
-**Error Responses:**
-- `404` — Thumbnail not found
+**Errores:**
+- `404` — Miniatura no encontrada
 
 ---
 
 ### GET /videos/{video_id}/comments
-List all comments for a video.
+Lista todos los comentarios de un video.
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 [
   {
     "id": 1,
     "video_id": 1,
-    "author": "Jane",
-    "content": "Great video!",
+    "author": "Maria",
+    "content": "Excelente video!",
     "created_at": "2026-05-06T22:00:00"
   }
 ]
@@ -170,45 +170,45 @@ List all comments for a video.
 ---
 
 ### POST /videos/{video_id}/comments
-Add a comment to a video.
+Agrega un comentario a un video.
 
-**Request Body:**
+**Cuerpo de la solicitud:**
 ```json
 {
-  "author": "Jane",
-  "content": "Great video!"
+  "author": "Maria",
+  "content": "Excelente video!"
 }
 ```
 
-**Response 200:** Comment object
+**Respuesta 200:** Objeto de comentario
 
-**Error Responses:**
-- `400` — Author and content are required
-- `404` — Video not found
+**Errores:**
+- `400` — El autor y el contenido son requeridos
+- `404` — Video no encontrado
 
 ---
 
 ### GET /videos/{video_id}/recommended
-Get recommended videos based on the current video.
+Obtiene videos recomendados basados en el video actual.
 
-**Response 200:** Array of video objects (max 8)
+**Respuesta 200:** Array de objetos de video (máximo 8)
 
-**Error Responses:**
-- `404` — Video not found
+**Errores:**
+- `404` — Video no encontrado
 
 ---
 
-## Users
+## Usuarios
 
 ### GET /users
-List all users.
+Lista todos los usuarios.
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 [
   {
     "id": 1,
-    "display_name": "John Doe",
+    "display_name": "Juan Perez",
     "avatar_url": "/users/1/avatar",
     "created_at": "2026-05-06T22:00:00"
   }
@@ -218,31 +218,31 @@ List all users.
 ---
 
 ### POST /users
-Create a new user.
+Crea un nuevo usuario.
 
 **Content-Type:** `multipart/form-data`
 
-**Form Fields:**
-| Field            | Type   | Required | Description                        |
-|------------------|--------|----------|------------------------------------|
-| display_name     | string | Yes      | User display name                  |
-| provider         | string | No       | Auth provider (default: `local`)   |
-| provider_subject | string | No       | Provider user ID                   |
-| email            | string | No       | User email                         |
-| avatar           | file   | No       | Avatar image                       |
+**Campos del formulario:**
+| Campo            | Tipo   | Requerido | Descripción                          |
+|------------------|--------|-----------|--------------------------------------|
+| display_name     | string | Sí        | Nombre de usuario                    |
+| provider         | string | No        | Proveedor de autenticación (default: `local`) |
+| provider_subject | string | No        | ID del usuario en el proveedor       |
+| email            | string | No        | Correo electrónico                   |
+| avatar           | file   | No        | Imagen de avatar                     |
 
-**Response 200:** User object
+**Respuesta 200:** Objeto de usuario
 
-**Error Responses:**
-- `400` — display_name is required or unknown provider
-- `400` — Avatar must be an image
+**Errores:**
+- `400` — display_name es requerido o proveedor desconocido
+- `400` — El avatar debe ser una imagen
 
 ---
 
 ### GET /users/providers
-List available authentication providers.
+Lista los proveedores de autenticación disponibles.
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 {
   "providers": ["local", "google"]
@@ -252,25 +252,25 @@ List available authentication providers.
 ---
 
 ### GET /users/{user_id}/avatar
-Get user avatar image.
+Obtiene la imagen de avatar del usuario.
 
-**Response 200:** Image file (jpeg/png)
+**Respuesta 200:** Archivo de imagen (jpeg/png)
 
-**Error Responses:**
-- `404` — User or avatar not found
+**Errores:**
+- `404` — Usuario o avatar no encontrado
 
 ---
 
 ### POST /users/{user_id}/subscriptions/{creator_id}
-Subscribe to a channel.
+Suscribirse a un canal.
 
-**Path Parameters:**
-| Parameter  | Type    | Description           |
-|------------|---------|-----------------------|
-| user_id    | integer | Subscriber user ID    |
-| creator_id | integer | Channel to subscribe  |
+**Parámetros de ruta:**
+| Parámetro  | Tipo    | Descripción              |
+|------------|---------|--------------------------|
+| user_id    | integer | ID del usuario suscriptor|
+| creator_id | integer | ID del canal a suscribir |
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 {
   "follower_id": 1,
@@ -278,16 +278,16 @@ Subscribe to a channel.
 }
 ```
 
-**Error Responses:**
-- `400` — Cannot subscribe to yourself
-- `404` — User or creator not found
+**Errores:**
+- `400` — No puedes suscribirte a ti mismo
+- `404` — Usuario o canal no encontrado
 
 ---
 
 ### DELETE /users/{user_id}/subscriptions/{creator_id}
-Unsubscribe from a channel.
+Desuscribirse de un canal.
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 { "status": "ok" }
 ```
@@ -295,9 +295,9 @@ Unsubscribe from a channel.
 ---
 
 ### GET /users/{user_id}/subscriptions
-List all channel IDs the user is subscribed to.
+Lista todos los IDs de canales a los que el usuario está suscrito.
 
-**Response 200:**
+**Respuesta 200:**
 ```json
 {
   "creator_ids": [2, 5, 8]
@@ -307,40 +307,40 @@ List all channel IDs the user is subscribed to.
 ---
 
 ### GET /users/{user_id}/feed
-Get videos from all subscribed channels, ordered by most recent.
+Obtiene los videos de todos los canales suscritos, ordenados por más recientes.
 
-**Response 200:** Array of video objects
+**Respuesta 200:** Array de objetos de video
 
-**Error Responses:**
-- `404` — User not found
+**Errores:**
+- `404` — Usuario no encontrado
 
 ---
 
-## Infrastructure
+## Infraestructura
 
-The application runs as a set of Docker containers orchestrated with Docker Compose:
+La aplicación corre como un conjunto de contenedores Docker orquestados con Docker Compose:
 
-| Service    | Technology              | Role                                    |
-|------------|-------------------------|-----------------------------------------|
-| nginx      | Nginx 1.29 alpine       | Reverse proxy, static file serving      |
-| backend    | FastAPI + Gunicorn       | REST API with 8 Uvicorn workers         |
-| frontend   | React + Vite (built)    | SPA served via Nginx                    |
-| postgres   | PostgreSQL 16 alpine    | Primary database with connection pool   |
-| redis      | Redis 7 alpine          | Response cache + view count buffering   |
+| Servicio   | Tecnología               | Rol                                          |
+|------------|--------------------------|----------------------------------------------|
+| nginx      | Nginx 1.29 alpine        | Reverse proxy y servido de archivos estáticos|
+| backend    | FastAPI + Gunicorn        | API REST con 8 workers Uvicorn               |
+| frontend   | React + Vite (compilado) | SPA servida vía Nginx                        |
+| postgres   | PostgreSQL 16 alpine     | Base de datos principal con pool de conexiones|
+| redis      | Redis 7 alpine           | Caché de respuestas + buffer de vistas       |
 
-**Key optimizations:**
-- Redis caches `GET /videos`, `GET /videos/:id`, comments and recommendations (TTL: 10-60s)
-- View counts are batched in Redis and flushed to PostgreSQL every 50 views
-- Video streaming supports HTTP Range requests (206 Partial Content) for seeking
-- PostgreSQL tuned with `max_connections=500`, `shared_buffers=256MB`
-- Nginx handles up to 16,384 concurrent connections per worker
+**Optimizaciones clave:**
+- Redis cachea `GET /videos`, `GET /videos/:id`, comentarios y recomendaciones (TTL: 10-60s)
+- Los contadores de vistas se acumulan en Redis y se sincronizan a PostgreSQL cada 50 vistas
+- El streaming de video soporta Range requests HTTP (206 Partial Content) para seeking
+- PostgreSQL configurado con `max_connections=500` y `shared_buffers=256MB`
+- Nginx maneja hasta 16,384 conexiones concurrentes por worker
 
-## Quick Start
+## Inicio rápido
 
 ```bash
 docker compose up --build
 ```
 
-App available at: `http://localhost`  
-API available at: `http://localhost/api`  
+App disponible en: `http://localhost`
+API disponible en: `http://localhost/api`
 Health check: `http://localhost/api/health`
